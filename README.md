@@ -6,7 +6,6 @@ See below for the original libary provided by Bitcraze
 ## Following changes have been conducted:
 
 * `MeshRaDs-Project` --> Folder that contains the self written scripts  
-* `cflib/crazyflie/swarm.py` --> firmware_print_callback got added and will executed to print console texts   
 
 
 
