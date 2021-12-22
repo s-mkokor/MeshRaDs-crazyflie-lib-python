@@ -23,10 +23,11 @@
 #  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
 #  MA  02110-1301, USA.
 """
-This script allows the user to connect to several crazyflies at once
-Afterwards a predetermined sequence can be flewn by the drones, similary to the synchronizedSequence.py from the example folder
-During this maneuvers parameters from each drone cann be logged and also the debugging_prints out of the crazyflie hardware are displayed
+Description needed
 """
+
+from Test_Measurment import *
+
 from math import pi
 import threading
 import time
@@ -38,77 +39,14 @@ import cflib.crtp
 from cflib.crazyflie.swarm import CachedCfFactory
 from cflib.crazyflie.swarm import Swarm
 
-
-# Possible commands, all times are in seconds
-Takeoff = namedtuple('Takeoff', ['height', 'time'])
-Land = namedtuple('Land', ['time'])
-Goto = namedtuple('Goto', ['x', 'y', 'z', 'time'])
-Turn = namedtuple('Turn', ['degrees'])
-Quit = namedtuple('Quit', [])                          # Reserved for the control loop, do not use in sequence
-Measurment = namedtuple('Measurment', ['time'])                  # Waits until amount many P2P packets have been received
-Wait_for_landing = namedtuple('Wait_for_landing', [])
-
-
-
-# Configuration Variables
-uris = [
-    'radio://0/80/2M/E7E7E7E704',  # cf_id 0
-    'radio://0/80/2M/E7E7E7E703',  # cf_id 1
-    #'radio://0/80/2M/E7E7E7E702',  # cf_id 2
-    # More URIs can be added to have more drones within the swarm
-]
+global fligth_status
+fligth_status = False
 
 # Time to wait between two steps
 STEP_TIME = 2
 
-
-sequence = [
-    # Step, CF_id,  action
-    (0,    0,      Takeoff(0.5, 2)),
-
-    (1,    1,      Takeoff(0.5, 2)),
-
-    (2,    1,      Goto(0, 0, 0.5, 2)),
-
-    (3,    0,      Goto(0, -1, 0.5, 2)),
-
-    (4,    1,      Wait_for_landing()),
-    (4,    0,      Measurment(2)),
-
-    (5,    0,      Goto(0, -1, 0.75, 2)),
-
-    (6,    0,      Measurment(2)),
-
-    (7,    0,      Land(2)),
-    (7,    1,      Land(2)),
-
-]
-
-
-# Logging
-from cflib.crazyflie.log import LogConfig
-
-def log_async(scf):
-    log_config = LogConfig(name='Position', period_in_ms=100)   # In here any data can be set to be logged
-    log_config.add_variable('stateEstimate.x', 'float')
-    log_config.add_variable('stateEstimate.y', 'float')
-    log_config.add_variable('stateEstimate.z', 'float')
-    scf.cf.log.add_config(log_config)
-    log_config.data_received_cb.add_callback(lambda t, d, l: logging_callback(scf.cf.link_uri, t, d, l))
-    log_config.start()
-
-
-def logging_callback(uri, timestamp, data, log_conf):       # The callback gets executed whenever new logging data is received
-    x = float(data['stateEstimate.x'])
-    y = float(data['stateEstimate.y'])
-    z = float(data['stateEstimate.z'])
-    print("Postion:{}, {}, {}" .format(x, y, z) )
-
 # Logging console text
-
 logging_list = []
-global fligth_status
-fligth_status = False
 
 def firmware_print_callback(console_text):              # this callbacks gets called whenever a print message gets received from a crazyflie
      #print(console_text, end = '')
@@ -231,7 +169,6 @@ if __name__ == '__main__':
         for uri in uris:
             swarm._cfs[uri].cf.console.receivedChar.add_callback(firmware_print_callback)       # adding callback for each cf
         
-        # swarm.parallel_safe(log_async)                    # cb for logger
         swarm.parallel_safe(activate_high_level_commander)
         swarm.reset_estimators()
 
@@ -244,7 +181,7 @@ if __name__ == '__main__':
 
 
         time.sleep(1)
-        logging_writer('logging.csv')
+        logging_writer(name)
 
 
 
